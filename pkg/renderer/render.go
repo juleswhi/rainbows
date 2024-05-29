@@ -19,10 +19,10 @@ type Plane struct {
 
 func newPlane() Plane {
 	return Plane{
-		X1: newV3(1, 0.75, 0),
-		X2: newV3(-1, 0.75, 0),
-		X3: newV3(1, -0.75, 0),
-		X4: newV3(-1, -0.75, 0),
+		X1: newV3(-1, 0.75, 0),
+		X2: newV3(1, 0.75, 0),
+		X3: newV3(-1, -0.75, 0),
+		X4: newV3(1, -0.75, 0),
 	}
 }
 
