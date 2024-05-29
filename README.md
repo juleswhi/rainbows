@@ -17,10 +17,3 @@ TODO:
 - [ ] Camera
 
 - [ ] Ray tracer
-
-
-
-
-
-
-

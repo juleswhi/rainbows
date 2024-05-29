@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-    p := tea.NewProgram(tui.New(), tea.WithFPS(60), tea.WithAltScreen())
+    p := tea.NewProgram(tui.New(), tea.WithFPS(120), tea.WithAltScreen())
     if _, err := p.Run(); err != nil {
         fmt.Printf("Oopsiues")
         os.Exit(1)
