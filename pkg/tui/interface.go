@@ -17,14 +17,14 @@ type model struct {
 
 	lines  []string
 	border lipgloss.Style
-	rays   []renderer.Ray
+	cols   []renderer.Colour
 }
 
 func New() *model {
 	return &model{
 		lines:  []string{"Hello"},
 		border: lipgloss.NewStyle(),
-		rays:   renderer.RayCast(),
+		cols:   renderer.RayCast(),
 	}
 }
 
@@ -57,9 +57,14 @@ func (m model) View() string {
 
     for j := range 192 {
         for i := range 255 {
-			for range 3 {
-				ray := m.rays[(j*256)+i]
-				idxstr := fmt.Sprintf("#%02X%02X%02X", int(ray.Direction.X), int(ray.Direction.Y), 50)
+			for range 2 {
+				col := m.cols[(j*256)+i]
+				idxstr := fmt.Sprintf(
+                    "#%02X%02X%02X",
+                    int(col.R),
+                    int(col.G),
+                    int(col.B),
+                )
 
                 s := st.Foreground(lipgloss.Color(idxstr)).Render("m")
 
@@ -78,7 +83,4 @@ func (m model) View() string {
 		lipgloss.Center,
 		lipgloss.JoinVertical(lipgloss.Center, lines...),
 	)
-	// idxstr := fmt.Sprintf("#%02X%02X%02X", int(m.rays[0].Direction.X), int(m.rays[0].Direction.Y), int(200))
-	// fmt.Println(idxstr)
-	// return fmt.Sprintf("%d", sb.Cap())
 }

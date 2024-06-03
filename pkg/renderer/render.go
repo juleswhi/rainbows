@@ -1,13 +1,13 @@
 package renderer
 
 import (
-	"github.com/charmbracelet/log"
+	"math"
 )
 
 type Camera *V3
 
 func newCamera() *V3 {
-	return newV3(0, 0, -1)
+	return newV3(0, 0, 2)
 }
 
 type Plane struct {
@@ -17,16 +17,101 @@ type Plane struct {
 	X4 *V3
 }
 
-func newPlane() Plane {
-	return Plane{
-		X1: newV3(-1, 0.75, 0),
-		X2: newV3(1, 0.75, 0),
-		X3: newV3(-1, -0.75, 0),
-		X4: newV3(1, -0.75, 0),
+type Colour struct {
+	R float32
+	G float32
+	B float32
+}
+
+func newColour(r, g, b float32) *Colour {
+	return &Colour{
+		R: r,
+		G: g,
+		B: b,
 	}
 }
 
-func RayCast() []Ray {
+type Sphere struct {
+	C      *V3
+	R      float32
+	Colour *Colour
+}
+
+func newPlane() Plane {
+	return Plane{
+		X1: newV3(-1.28, 0.86, -0.5),
+		X2: newV3(1.28, 0.86, -0.5),
+		X3: newV3(-1.28, -0.86, -0.5),
+		X4: newV3(1.28, -0.86, -0.5),
+	}
+}
+
+func newSphere(center *V3, radius float32, colour *Colour) Sphere {
+	return Sphere{
+		C:      center,
+		R:      radius,
+		Colour: colour,
+	}
+}
+
+func newSpheres() []Sphere {
+	return []Sphere{
+		newSphere(newV3(0.2, -0.1, -1), 0.5, newColour(0, 1, 0)),
+		newSphere(newV3(1.2, -0.5, -1.75), 0.4, newColour(1, 1, 1)),
+	}
+}
+
+func (s *Sphere) Intersection(ray Ray) float64 {
+	cp := ray.Origin.Take(s.C)
+
+	a := ray.Direction.Dot(ray.Direction)
+	b := 2 * cp.Dot(ray.Direction)
+	c := cp.Dot(cp) - s.R*s.R
+
+	disc := b*b - 4*a*c
+
+	if disc < 0 {
+		return 0
+	}
+
+	sqrt := math.Sqrt(float64(disc))
+
+	var ts []float64
+
+	sub := (float64(-b) - sqrt) / (2 * float64(a))
+
+	if sub >= 0 {
+		ts = append(ts, sub)
+	}
+
+	add := (float64(-b) + sqrt) / (2 * float64(a))
+
+	if add >= 0 {
+		ts = append(ts, add)
+	}
+
+	if len(ts) == 0 {
+		return 0
+	}
+
+	return minfloat(ts)
+}
+
+func minfloat(floats []float64) (m float64) {
+	if len(floats) > 0 {
+		m = floats[0]
+	}
+
+	for i := 1; i < len(floats); i++ {
+		if floats[i] < m {
+			m = floats[i]
+		}
+	}
+
+	return
+}
+
+func RayCast() []Colour {
 	image := NewImage(256, 192)
 	plane := newPlane()
 	rays := []Ray{}
@@ -66,23 +151,64 @@ func RayCast() []Ray {
 		}
 	}
 
-	newRays := []Ray{}
+	cols := []Colour{}
+	spheres := newSpheres()
 
 	for _, ray := range rays {
-		newray := ray
-		newray.Direction.X = normalize(ray.Direction.X, minX, maxX, 0, 255)
-		newray.Direction.Y = normalize(ray.Direction.Y, minX, maxX, 0, 255)
-		newray.Direction.Z = normalize(ray.Direction.Z, minX, maxX, 0, 255)
-		newRays = append(newRays, newray)
+		var intersections []float64
+
+		for _, sphere := range spheres {
+			inter := sphere.Intersection(ray)
+			intersections = append(intersections, inter)
+		}
+
+		if allZero(intersections) {
+			col := newColour(
+				0, 0, 0,
+			)
+			cols = append(cols, *col)
+			continue
+		}
+
+		minIdx := idxNonZero(intersections)
+
+		sp := spheres[minIdx]
+
+		col := newColour(
+			sp.Colour.R*255,
+			sp.Colour.G*255,
+			sp.Colour.B*255,
+		)
+
+		cols = append(cols, *col)
 	}
 
-	log.Info("X", "Max", maxX, "Min", minX)
-	log.Info("Y", "Max", maxY, "Min", minY)
+	return cols
+}
 
-	// log.Info("X * 255", "Max", maxX*255, "Min", minX*255)
-	// log.Info("Y * 255", "Max", maxY*255, "Min", minY*255)
+func allZero(nums []float64) bool {
+	for _, num := range nums {
+		if num != 0 {
+			return false
+		}
+	}
+	return true
+}
 
-	return newRays
+func idxNonZero(nums []float64) int {
+	minVal := math.MaxFloat64
+	minIdx := 0
+
+	for i, num := range nums {
+		if num == 0 {
+			continue
+		}
+		if num < minVal {
+			minVal = num
+			minIdx = i
+		}
+	}
+	return minIdx
 }
 
 func normalize(value float32, minX, maxX, newMin, newMax float32) float32 {

@@ -1,5 +1,7 @@
 package renderer
 
+import "math"
+
 type V3 struct {
 	X float32
 	Y float32
@@ -28,5 +30,18 @@ func (vec1 *V3) Scale(scale float32) *V3 {
         X: vec1.X * scale,
         Y: vec1.Y * scale,
         Z: vec1.Z * scale,
+    }
+}
+
+func (vec1 *V3) Dot(vec2 *V3) float32 {
+    return (vec1.X * vec2.X) + (vec1.Y * vec1.Y) + (vec1.Z * vec2.Z)
+}
+
+func (vec *V3) normalised() *V3 {
+    mag := math.Sqrt(float64(vec.Dot(vec)))
+    return &V3 {
+        vec.X / float32(mag),
+        vec.Y / float32(mag),
+        vec.Z / float32(mag),
     }
 }
